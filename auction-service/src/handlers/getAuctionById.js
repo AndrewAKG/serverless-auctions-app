@@ -1,37 +1,35 @@
-import { v4 as uuid } from "uuid";
 import AWS from "aws-sdk";
 import commonMiddleware from '../lib/commonMiddleware';
 import createError from "http-errors";
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-const createAuction = async (event, context) => {
-  const { title } = event.body;
-  const now = new Date();
-
-  const auction = {
-    id: uuid(),
-    title,
-    status: "OPEN",
-    createdAt: now.toISOString(),
-  };
+const getAuctionById = async (event, context) => {
+  let auction;
+  const { id } = event.pathParameters;
 
   try {
-    await dynamodb
-      .put({
+    const result = await dynamodb
+      .get({
         TableName: process.env.AUCTIONS_TABLE_NAME,
-        Item: auction,
+        Key: { id }
       })
       .promise();
+
+    auction = result.Item;
   } catch (e) {
     console.error(e);
     throw new createError.InternalServerError(e);
   }
 
+  if(!auction){
+    throw new createError.NotFound(`Auction with ID ${id} not found.`);
+  }
+
   return {
-    statusCode: 201,
+    statusCode: 200,
     body: JSON.stringify(auction),
   };
 };
 
-export const handler = commonMiddleware(createAuction);
+export const handler = commonMiddleware(getAuctionById);
