@@ -1,12 +1,11 @@
-import AWS from "aws-sdk";
+import AWS from 'aws-sdk';
 import commonMiddleware from '../lib/commonMiddleware';
-import createError from "http-errors";
+import createError from 'http-errors';
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-const getAuctionById = async (event, context) => {
+export const getAuctionByIdAsync = async (id) => {
   let auction;
-  const { id } = event.pathParameters;
 
   try {
     const result = await dynamodb
@@ -22,13 +21,20 @@ const getAuctionById = async (event, context) => {
     throw new createError.InternalServerError(e);
   }
 
-  if(!auction){
+  if (!auction) {
     throw new createError.NotFound(`Auction with ID ${id} not found.`);
   }
 
+  return auction;
+};
+
+const getAuctionById = async (event, context) => {
+  const { id } = event.pathParameters;
+  const auction = await getAuctionByIdAsync(id);
+
   return {
     statusCode: 200,
-    body: JSON.stringify(auction),
+    body: JSON.stringify(auction)
   };
 };
 

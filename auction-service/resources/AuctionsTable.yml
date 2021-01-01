@@ -9,4 +9,3 @@ AuctionsTable:
     KeySchema:
       - AttributeName: id
         KeyType: HASH
-        
